@@ -309,6 +309,15 @@ checking here.
 
 Disable this access via `(pixel-read-disable!)`
 
+### syphon integration
+
+- build syphon-java
+- copy jar file to current directory
+- enable lein localrepo in you leiningen config
+- `lein localrepo install jsyphon.jar jsyphon 0.0.1`
+- copy the jnilib file from syphon-java-dir/jsyphon/native_src/build to the shadertone subdir: target/native/macosx/x86_64 (this allows lein/java to find the native syphon libs
+- start the REPL and run shadertone
+
 ## Changes
 
 * __0.2.6 - Released Sept ?, 2015__
