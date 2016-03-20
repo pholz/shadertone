@@ -7,7 +7,8 @@
                  [org.clojure/clojure "1.5.1"]
                  [hello_lwjgl/lwjgl   "2.9.1"]
                  [overtone            "0.9.1"]
-                 [watchtower          "0.1.1"]]
+                 [watchtower          "0.1.1"]
+                 [jsyphon "0.0.1"]]
   :main ^{:skip-aot true} shadertone.core
   ;; add per WARNING: JVM argument TieredStopAtLevel=1 is active...
   :jvm-opts ^:replace []

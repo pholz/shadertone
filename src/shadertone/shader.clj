@@ -13,7 +13,8 @@
            (org.lwjgl.input Mouse)
            (org.lwjgl.opengl ContextAttribs Display DisplayMode
                              GL11 GL12 GL13 GL15 GL20
-                             PixelFormat)))
+                             PixelFormat)
+           (jsyphon JSyphonServer)))
 
 ;; ======================================================================
 ;; State Variables
@@ -224,6 +225,7 @@
         _                   (GL15/glBufferData GL15/GL_ARRAY_BUFFER
                                            ^FloatBuffer vertices-buffer
                                            GL15/GL_STATIC_DRAW)
+
         _ (except-gl-errors "@ end of init-buffers")]
     (swap! locals
            assoc
@@ -452,9 +454,11 @@
         _         (-> ^FloatBuffer (:channel-res-buffer @locals)
                       (.put ^floats (float-array tex-whd))
                       (.flip))
+        sy-tex (GL11/glGenTextures)
         ]
     (swap! locals assoc
-           :tex-ids tex-ids)))
+           :tex-ids tex-ids
+           :sy-tex sy-tex)))
 
 (defn- init-gl
   [locals]
@@ -697,6 +701,9 @@
         (draw locals))
       ;; else clear to prevent strobing awfulness
       (do
+
+        ;; syphon
+
         (GL11/glClear GL11/GL_COLOR_BUFFER_BIT)
         (except-gl-errors "@ bad-draw glClear ")
         (if @reload-shader
@@ -719,15 +726,52 @@
     (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER 0)
     (GL15/glDeleteBuffers ^Integer vbo-id)))
 
+(defn- update-syphon
+  [sy-srv w h dummy]
+  (GL11/glEnable GL11/GL_TEXTURE_2D)
+  (let [sy-tex (GL11/glGenTextures)]
+
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D sy-tex)
+
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MIN_FILTER GL11/GL_NEAREST)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_MAG_FILTER GL11/GL_NEAREST)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_S GL11/GL_CLAMP)
+    (GL11/glTexParameteri GL11/GL_TEXTURE_2D GL11/GL_TEXTURE_WRAP_T GL11/GL_CLAMP)
+
+    (GL11/glTexImage2D GL11/GL_TEXTURE_2D
+                       0
+                       GL11/GL_RGBA8
+                       w
+                       h
+                       0
+                       GL11/GL_RGBA
+                       GL11/GL_UNSIGNED_BYTE
+                       dummy)
+    (GL11/glCopyTexSubImage2D GL11/GL_TEXTURE_2D 0 0 0 0 0 w h)
+
+    (. sy-srv publishFrameTexture sy-tex GL11/GL_TEXTURE_2D 0 0 w h w h false)
+    (GL11/glDeleteTextures sy-tex)))
+
 (defn- run-thread
-  [locals mode shader-filename shader-str-atom tex-filenames title true-fullscreen? user-fn display-sync-hz]
+  [locals mode shader-filename shader-str-atom tex-filenames title true-fullscreen? user-fn display-sync-hz sy-srv]
   (init-window locals mode title shader-filename shader-str-atom tex-filenames true-fullscreen? user-fn display-sync-hz)
   (init-gl locals)
-  (while (and (= :yes (:active @locals))
-              (not (Display/isCloseRequested)))
-    (update-and-draw locals)
-    (Display/update)
-    (Display/sync (:display-sync-hz @locals)))
+
+  (. sy-srv initWithName "shadertone-syphon")
+  (let [
+        dummy (BufferUtils/createByteBuffer 3145728)
+        w (int (get locals :width 800))
+        h (int (get locals :height 600))]
+    (while (and (= :yes (:active @locals))
+                (not (Display/isCloseRequested)))
+
+      (update-and-draw locals)
+     ; (println (. sy-srv getName))
+      (update-syphon sy-srv w h dummy)
+      (Display/update)
+      (Display/sync (:display-sync-hz @locals))
+      ))
+  (. sy-srv stop)
   (destroy-gl locals)
   (Display/destroy)
   (swap! locals assoc :active :no))
@@ -916,7 +960,8 @@
                           shader-filename-or-str-atom
                           (atom nil))
         shader-str      (if-not is-filename
-                          @shader-str-atom)]
+                          @shader-str-atom)
+        syphon-srv (JSyphonServer.)]
     (when (sane-user-inputs mode shader-filename shader-str textures title true-fullscreen? user-fn)
       ;; stop the current shader
       (stop)
@@ -940,7 +985,8 @@
                                  title
                                  true-fullscreen?
                                  user-fn
-                                 display-sync-hz)))))))
+                                 display-sync-hz
+                                 syphon-srv)))))))
 
 (defn start
   "Start a new shader display. Forces the display window to be
