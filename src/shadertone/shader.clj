@@ -139,7 +139,7 @@
         ;;file-str (slurp filename)
         file-str (str "#version 120\n"
                       "uniform vec3      iResolution;\n"
-                      "uniform float     iGlobalTime;\n"xfxf
+                      "uniform float     iGlobalTime;\n"
                       "uniform float     iChannelTime[4];\n"
                       "uniform vec3      iChannelResolution[4];\n"
                       "uniform vec4      iMouse;\n"

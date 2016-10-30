@@ -3,7 +3,8 @@
 ;; executed at once.  It demonstrates how we can interact with
 ;; Overtone.
 (ns demo2
-  (:use [overtone.live])
+  (:use [overtone.live]
+        [overtone.synth.stringed])
   (:require [shadertone.tone :as t]
             [leipzig.live    :as ll]
             [leipzig.melody  :as lm]
@@ -13,6 +14,8 @@
 (t/start "examples/vdtest0.glsl"
          :width 800 :height 600
          :textures [:overtone-audio])
+
+(System/getProperty "java.library.path")
 
 (t/stop) ; at some point...
 
@@ -25,6 +28,52 @@
 (def open-hihat (sample (freesound-path 26657)))
 (def clap (sample (freesound-path 48310)))
 (def gshake (sample (freesound-path 113625)))
+
+(def gtr (guitar))
+
+(guitar-strum gtr :E :down 1.25)
+
+(defsynth bx0 [freq 440 amp 0.1]
+  (out 0 (* amp (saw freq))))
+
+(bx0)
+
+(kill bx0)
+
+(demo (g-verb (* 0.3 (sin-osc:kr 10 0) (saw 200)) 200 8))
+
+(demo 60 (g-verb (sum
+                  (map #(blip (* (midicps (duty:kr % 0 (dseq [24 27 31 36 41] INF)))
+                                 %2)
+                              (mul-add:kr (lf-noise1:kr 1/2) 3 4))
+                       [1 1/2 1/4]
+                       [1 4 8]))
+                 200 8))
+
+
+
+(defn trf [x] (* 3 x))
+
+(mod 6 5)
+
+(defn offs [] 44)
+
+(definst wbl [oct 12] (let [
+                             y (sum (map #(* 0.1
+                                              (sin-osc
+                                               (midicps
+                                                (duty:kr % 0
+                                                         (drand (map (partial + oct) [24 27 31]) INF)))
+                                                     ))
+                                    [1/2 1/4 1]))
+                       x y]
+                         (out 0 (pan2 (g-verb x 1 1/2)))))
+
+(wbl 48)
+
+(ctl wbl :oct 48)
+
+(stop)
 
 (snare)
 (kick)
