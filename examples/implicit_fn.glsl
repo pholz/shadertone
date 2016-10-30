@@ -2,7 +2,7 @@
 const float PI = 3.1415926535; // is this in glsl somewhere?
 
 // some vars that you also may want to adjust
-float PETALS = 5;
+float PETALS = 8;
 float SPIRAL = 1.5;
 
 // convert the fragment coordinates (fc.x,fc.y) to a screen u,v space.
@@ -87,7 +87,7 @@ vec3 color4(vec2 rt)
 vec3 color5(vec2 rt)
 {
     float u = fract2(abs(fn(rt)));
-    float v = fract2(iGlobalTime/50);
+    float v = fract2(iGlobalTime/20);
     return texture2D(iChannel0,vec2(u,v)).xyz;
 }
 // ======================================================================
@@ -106,7 +106,7 @@ void main(void)
     // Select one colorN routine at a time
     //vec3 c = vec3(uv.x,uv.y,0);  // see x, y
     //vec3 c = vec3(rt.x,rt.y,0);  // see r, theta
-    vec3 c = color0(rt);
+    vec3 c = color5(rt);
     //vec3 c = color1(rt);
     //vec3 c = color2(rt);
     //vec3 c = color3(rt);

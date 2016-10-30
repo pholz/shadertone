@@ -6,11 +6,15 @@
   (:use [overtone.live])
   (:require [shadertone.tone :as t]
             [leipzig.live    :as ll]
-            [leipzig.melody  :as lm]))
+            [leipzig.melody  :as lm]
+            )
+  (:import [jsyphon JSyphonClient JSyphonServer]))
 
-(t/start "examples/disco.glsl"
+(t/start "examples/vdtest0.glsl"
          :width 800 :height 600
          :textures [:overtone-audio])
+
+(t/stop) ; at some point...
 
 ;; now go find some Overtone demos like examples/compositions/funk.clj
 
@@ -21,6 +25,9 @@
 (def open-hihat (sample (freesound-path 26657)))
 (def clap (sample (freesound-path 48310)))
 (def gshake (sample (freesound-path 113625)))
+
+(snare)
+(kick)
 
 (defmethod ll/play-note :default [{p :pitch}]
   (case p
@@ -65,5 +72,7 @@
        (lm/where :duration (lm/bpm (* 2 124)))))
 
 (def beats0 nil) ;; to turn off the melody
+
+(stop)
 
 (t/stop) ; at some point...
